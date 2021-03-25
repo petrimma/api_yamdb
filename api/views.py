@@ -1,35 +1,36 @@
+import string
+
 from django.conf import settings
 from django.core.mail import send_mail
+from django.utils.crypto import get_random_string
 from rest_framework import filters
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .generators import Generator
 from .models import User
-from .permissions import (
-    IsAdmin
-)
 from .serializers import UserSerializer
 
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))
 def email_confirmation(request):
-    """
-    Генерирует рендомный username на основе почтового логина
-    """
     if request.method == 'POST':
         user_email = request.data.get('email')
 
         if not user_email:
             return Response('E-mail не был передан.')
 
-        confirmation_code = Generator().code_generator(length=6)
-        random_username = Generator().login_email_generator(
-            email=user_email,
-            length=5)
+        confirmation_code = get_random_string(length=6,
+                                              allowed_chars=string.digits)
+
+        def random_username():
+            email_username = user_email.split("@")[0]
+            random_code = get_random_string(length=5,
+                                            allowed_chars=string.digits)
+            return f'{email_username}_{random_code}'
 
         def send_email():
             send_mail(
@@ -49,7 +50,7 @@ def email_confirmation(request):
         else:
             User.objects.create_user(
                 email=user_email,
-                username=random_username,
+                username=random_username(),
                 confirmation_code=confirmation_code,
             )
 
@@ -64,7 +65,8 @@ class GetJWTToken(viewsets.ModelViewSet):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = IsAdmin
+    permission_classes = AllowAny  # TODO Не забудь сменить
     filter_backends = [filters.SearchFilter]
     lookup_field = ['username', ]
     search_fields = ['username', ]
+    pagination_class = PageNumberPagination
