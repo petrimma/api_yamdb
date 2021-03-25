@@ -18,6 +18,3 @@ urlpatterns = [
     path('v1/auth/email/', views.email_confirmation, name='email'),
 ]
 
-urlpatterns = [
-
-]
