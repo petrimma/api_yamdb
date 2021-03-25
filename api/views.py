@@ -70,3 +70,13 @@ def GetJWTToken(request):
                         status=status.HTTP_200_OK)
 
     return Response('Необходимо передать email и confirmation code.')
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny, ]  # TODO Не забудь сменить
+    filter_backends = [filters.SearchFilter]
+    lookup_field = 'username'
+    search_fields = ['username', ]
+    pagination_class = PageNumberPagination
