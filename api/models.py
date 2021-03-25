@@ -68,10 +68,10 @@ class Review(models.Model):
     )
 
     def __str__(self):
-            return self.text
+        return self.text
 
 
-class Comment:
+class Comment(models.Model):
     review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name="comments",
     )
@@ -84,4 +84,4 @@ class Comment:
     )
 
     def __str__(self):
-            return self.text
+        return self.text
