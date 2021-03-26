@@ -40,12 +40,43 @@ class User(AbstractUser):
         return User.username
 
 
+class Genre(models.Model):
+    name = models.CharField('Название жанра', unique=True, max_length=20)
+    slug = models.SlugField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('-name',)
+
+
+class Category(models.Model):
+    name = models.CharField('Название категории', unique=True, max_length=20)
+    slug = models.SlugField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('-name',)
+
+
 class Title(models.Model):
-    pass
+    name = models.CharField('Название', max_length=20)
+    year = models.IntegerField('Год выпуска', blank=True, null=True)
+    rating = models.IntegerField('Рейтинг', blank=True, null=True)
+    description = models.TextField('Описание', max_length=400, blank=True)
+    genre = models.ManyToManyField(Genre, verbose_name='genre')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL,
+                                 blank=True, null=True,
+                                 verbose_name='category')
+
+    class Meta:
+        ordering = ('-name', )
 
 
 class Review(models.Model):
-
     class Score(models.IntegerChoices):
         ONE = 1
         TWO = 2
