@@ -17,4 +17,3 @@ urlpatterns = [
     path('v1/auth/token/', views.GetJWTToken, name='token'),
     path('v1/auth/email/', views.email_confirmation, name='email'),
 ]
-

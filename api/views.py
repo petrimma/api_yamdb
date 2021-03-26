@@ -7,16 +7,19 @@ from django.utils.crypto import get_random_string
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import User
+from .models import Review, Title, User
 from .serializers import (
     UserSerializer,
     UserTokenSerializer,
-    SendCodeSerializer
+    SendCodeSerializer,
+    CommentSerializer,
+    ReviewSerializer
 )
+from .permissions import ReadOnly, IsAdmin, IsModerator, IsAuthor
 
 
 @api_view(['POST'])
@@ -80,3 +83,30 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     search_fields = ['username', ]
     pagination_class = PageNumberPagination
+    
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = ReadOnly, IsAuthenticated, IsAuthor, IsModerator
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(Review, pk=self.kwargs.get("review_id"))
+        serializer.save(author=self.request.user, review=review)
+
+    def get_queryset(self):
+        review = get_object_or_404(Review, pk=self.kwargs.get("review_id"))
+        return review.comments.all()
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = ReadOnly, IsAuthenticated, IsAuthor, IsModerator
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
+        serializer.save(author=self.request.user, title=title)
+
+    def get_queryset(self):
+        title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
+        return title.reviews.all()

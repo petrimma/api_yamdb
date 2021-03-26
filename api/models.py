@@ -77,6 +77,7 @@ class Title(models.Model):
 
 
 class Review(models.Model):
+
     class Score(models.IntegerChoices):
         ONE = 1
         TWO = 2
