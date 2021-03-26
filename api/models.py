@@ -35,10 +35,45 @@ class User(AbstractUser):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
         ordering = ('username',)
-        
+
+    def __str__(self):
+        return User.username
+
+
+class Genre(models.Model):
+    name = models.CharField('Название жанра', unique=True, max_length=20)
+    slug = models.SlugField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('-name',)
+
+
+class Category(models.Model):
+    name = models.CharField('Название категории', unique=True, max_length=20)
+    slug = models.SlugField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('-name',)
+
 
 class Title(models.Model):
-    pass
+    name = models.CharField('Название', max_length=20)
+    year = models.IntegerField('Год выпуска', blank=True, null=True)
+    rating = models.IntegerField('Рейтинг', blank=True, null=True)
+    description = models.TextField('Описание', max_length=400, blank=True)
+    genre = models.ManyToManyField(Genre, verbose_name='genre')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL,
+                                 blank=True, null=True,
+                                 verbose_name='category')
+
+    class Meta:
+        ordering = ('-name', )
 
 
 class Review(models.Model):
@@ -68,10 +103,10 @@ class Review(models.Model):
     )
 
     def __str__(self):
-            return self.text
+        return self.text
 
 
-class Comment:
+class Comment(models.Model):
     review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name="comments",
     )
@@ -84,4 +119,4 @@ class Comment:
     )
 
     def __str__(self):
-            return self.text
+        return self.text
