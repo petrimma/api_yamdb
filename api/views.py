@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
@@ -11,7 +12,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Review, Title, User, Genre
+from .models import Review, Title, User, Genre, Category
+from .permissions import ReadOnly, IsModerator, IsAuthor, ReadOnlyOrAdmin, \
+    IsAdmin
 from .serializers import (
     UserSerializer,
     UserTokenSerializer,
@@ -19,8 +22,19 @@ from .serializers import (
     CommentSerializer,
     ReviewSerializer,
     GenreSerializer,
+    CategorySerializer, TitleSerializer,
 )
-from .permissions import ReadOnly, IsAdmin, IsModerator, IsAuthor
+
+
+class ListPostDelete(mixins.DestroyModelMixin,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.CreateModelMixin,
+                     viewsets.GenericViewSet):
+    """
+    The class provides List, Post and Delete actions.
+    """
+    pass
 
 
 @api_view(['POST'])
@@ -84,7 +98,8 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     search_fields = ['username', ]
     pagination_class = PageNumberPagination
-    
+
+
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
@@ -101,8 +116,9 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+
     pagination_class = PageNumberPagination
-    permission_classes = ReadOnly, IsAuthenticated, IsAuthor, IsModerator
+    permission_classes = [ReadOnly | IsAdmin]
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -113,13 +129,35 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return title.reviews.all()
 
 
-class GenreViewSet(mixins.DestroyModelMixin,
-                    mixins.ListModelMixin,
-                    mixins.CreateModelMixin,
-                    viewsets.GenericViewSet):
+class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    #permission_classes = ReadOnly
+    permission_classes = [ReadOnly | IsAdmin, ]
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
+    pagination_class = PageNumberPagination
+
+
+class CategoryViewSet(ListPostDelete):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [ReadOnlyOrAdmin, ]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('name', 'slug')
+    lookup_field = 'slug'
+    pagination_class = PageNumberPagination
+
+
+class TitleViewSet(ListPostDelete):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    permission_classes = [ReadOnlyOrAdmin, ]
+    lookup_field = 'id'
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_fields = ['name',
+                        'year',
+                        'genre',
+                        'category',
+                        ]
+    pagination_class = PageNumberPagination

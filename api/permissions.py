@@ -5,6 +5,17 @@ from .models import UserRole
 MODERATOR_ALLOWED_ACTIONS = ('PATCH', 'DELETE')
 
 
+class ReadOnlyOrAdmin(permissions.BasePermission):
+    def has_permission(self, request, view):
+
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if request.user.is_authenticated:
+            return (request.user.role == UserRole.admin
+                    or request.user.is_superuser)
+
+
 class ReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.method in permissions.SAFE_METHODS
@@ -28,7 +39,7 @@ class IsModerator(permissions.BasePermission):
         return (
                 request.method in MODERATOR_ALLOWED_ACTIONS
                 and request.user.role == UserRole.moderator
-                )
+        )
 
 
 class IsAuthor(permissions.BasePermission):

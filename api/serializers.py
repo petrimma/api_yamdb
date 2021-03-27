@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Comment, Review, User, Genre
+from .models import Comment, Review, User, Genre, Category, Title
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -46,7 +46,32 @@ class UserTokenSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, write_only=True)
     confirmation_code = serializers.CharField(required=True, write_only=True)
 
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = "__all__"
+        fields = ["name", "slug"]
         model = Genre
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ["name", "slug"]
+        model = Category
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, required=False)
+    category = CategorySerializer()
+    id = serializers.IntegerField()
+
+    class Meta:
+        model = Title
+        fields = [
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category',
+        ]
