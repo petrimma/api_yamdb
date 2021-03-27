@@ -47,31 +47,45 @@ class UserTokenSerializer(serializers.Serializer):
     confirmation_code = serializers.CharField(required=True, write_only=True)
 
 
-class GenreSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ["name", "slug"]
-        model = Genre
-
-
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ["name", "slug"]
+        fields = ('name', 'slug',)
+        lookup_field = 'slug'
+        extra_kwargs = {
+            'url': {'lookup_field': 'slug'}
+        }
         model = Category
 
 
+
+
+
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ('name', 'slug',)
+        lookup_field = 'slug'
+        extra_kwargs = {
+            'url': {'lookup_field': 'slug'}
+        }
+        model = Genre
+
+
+
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True, required=False)
-    category = CategorySerializer()
-    id = serializers.IntegerField()
+    genre = serializers.SlugRelatedField(
+        slug_field="slug",
+        many=True,
+        required=False,
+        queryset=Genre.objects.all()
+    )
+    category = serializers.SlugRelatedField(
+        slug_field="slug",
+        required=False,
+        queryset=Category.objects.all()
+    )
 
     class Meta:
+        fields = ('id', 'name', 'year', 'rating', 'description', 'genre', 'category',)
         model = Title
-        fields = [
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'genre',
-            'category',
-        ]

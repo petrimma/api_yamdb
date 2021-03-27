@@ -12,8 +12,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
+from .filters import TitlesFilter
 from .models import Review, Title, User, Genre, Category
-from .permissions import ReadOnly, IsModerator, IsAuthor, ReadOnlyOrAdmin, \
+from .permissions import ReadOnly, IsModerator, IsAuthor,  \
     IsAdmin
 from .serializers import (
     UserSerializer,
@@ -28,7 +29,6 @@ from .serializers import (
 
 class ListPostDelete(mixins.DestroyModelMixin,
                      mixins.ListModelMixin,
-                     mixins.RetrieveModelMixin,
                      mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
     """
@@ -93,7 +93,7 @@ def GetJWTToken(request):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [AllowAny, ]  # TODO Не забудь сменить
+    permission_classes = [IsAdmin, ]
     filter_backends = [filters.SearchFilter]
     lookup_field = 'username'
     search_fields = ['username', ]
@@ -129,10 +129,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return title.reviews.all()
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+
+class GenreViewSet(ListPostDelete):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [ReadOnly | IsAdmin, ]
+    permission_classes = [ReadOnly | IsAdmin ]
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
@@ -142,22 +143,17 @@ class GenreViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(ListPostDelete):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [ReadOnlyOrAdmin, ]
+    permission_classes = [ReadOnly | IsAdmin ]
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
     pagination_class = PageNumberPagination
 
 
-class TitleViewSet(ListPostDelete):
+class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [ReadOnlyOrAdmin, ]
-    lookup_field = 'id'
-    filter_backends = [DjangoFilterBackend, ]
-    filterset_fields = ['name',
-                        'year',
-                        'genre',
-                        'category',
-                        ]
     pagination_class = PageNumberPagination
+    permission_classes = [ReadOnly | IsAdmin ]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TitlesFilter
