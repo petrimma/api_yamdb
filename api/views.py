@@ -4,20 +4,21 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-from rest_framework import filters, status, viewsets
+from rest_framework import filters, status, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from .models import Review, Title, User
+from .models import Review, Title, User, Genre
 from .serializers import (
     UserSerializer,
     UserTokenSerializer,
     SendCodeSerializer,
     CommentSerializer,
-    ReviewSerializer
+    ReviewSerializer,
+    GenreSerializer,
 )
 from .permissions import ReadOnly, IsAdmin, IsModerator, IsAuthor
 
@@ -110,3 +111,15 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
         return title.reviews.all()
+
+
+class GenreViewSet(mixins.DestroyModelMixin,
+                    mixins.ListModelMixin,
+                    mixins.CreateModelMixin,
+                    viewsets.GenericViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    #permission_classes = ReadOnly
+    filter_backends = [filters.SearchFilter]
+    search_fields = ('name', 'slug')
+    lookup_field = 'slug'
