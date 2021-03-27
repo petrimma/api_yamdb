@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Comment, Review, User
+from .models import Comment, Review, User, Genre
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -45,3 +45,8 @@ class SendCodeSerializer(serializers.Serializer):
 class UserTokenSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, write_only=True)
     confirmation_code = serializers.CharField(required=True, write_only=True)
+
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = "__all__"
+        model = Genre
