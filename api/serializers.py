@@ -25,6 +25,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = "__all__"
         model = Review
 
+    def validate(self, data):
+        title=self.context.get('view').kwargs.get('title_id')
+        author=self.context['request'].user
+        if (self.context.get('request').method == 'POST'
+            and Review.objects.filter(title=title,
+                                      author_id=author.id).exists()):
+            raise serializers.ValidationError(
+                'Вы уже написали отзыв.')
+        return data
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -114,3 +124,21 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Title
+
+class TitleRatingSerializer(serializers.ModelSerializer):
+    rating = serializers.FloatField()
+
+    genre = GenreField(
+        many=True,
+        slug_field='slug',
+        queryset=Genre.objects.all()
+    )
+    category = CategoryField(
+        slug_field='slug',
+        queryset=Category.objects.all()
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = Title
+        
