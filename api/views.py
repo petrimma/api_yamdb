@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets, mixins
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitlesFilter
 from .models import Review, Title, User, Genre, Category
-from .permissions import ReadOnly, IsModerator, IsAuthor,  \
+from .permissions import ReadOnly, IsModerator, IsAuthor, \
     IsAdmin
 from .serializers import (
     UserSerializer,
@@ -81,6 +81,7 @@ def GetJWTToken(request):
         email = request.data.get('email')
         confirmation_code = request.data.get('confirmation_code')
         user = get_object_or_404(User, email=email)
+
         if user.confirmation_code == confirmation_code:
             token = AccessToken.for_user(user)
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
@@ -98,6 +99,22 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'username'
     search_fields = ['username', ]
     pagination_class = PageNumberPagination
+
+    @action(methods=('GET', 'PATCH'),
+            permission_classes=(IsAuthenticated, ),
+            detail=False)
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            user = get_object_or_404(User, username=request.user.username)
+            serializer = UserSerializer(user, request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -129,11 +146,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return title.reviews.all()
 
 
-
 class GenreViewSet(ListPostDelete):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [ReadOnly | IsAdmin ]
+    permission_classes = [ReadOnly | IsAdmin]
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
@@ -143,7 +159,7 @@ class GenreViewSet(ListPostDelete):
 class CategoryViewSet(ListPostDelete):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [ReadOnly | IsAdmin ]
+    permission_classes = [ReadOnly | IsAdmin]
     filter_backends = [filters.SearchFilter]
     search_fields = ('name', 'slug')
     lookup_field = 'slug'
@@ -154,6 +170,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [ReadOnly | IsAdmin ]
+    permission_classes = [ReadOnly | IsAdmin]
     filter_backends = [DjangoFilterBackend]
     filterset_class = TitlesFilter
