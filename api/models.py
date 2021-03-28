@@ -25,11 +25,12 @@ class User(AbstractUser):
         choices=UserRole.choices,
         default=UserRole.user
     )
-    confirmation_code = models.CharField(max_length=40,
+    confirmation_code = models.CharField(max_length=8,
                                          null=True, blank=True)
+    is_code_expired = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username',)
+    REQUIRED_FIELDS = []
 
     class Meta:
         verbose_name = 'User'
