@@ -4,7 +4,6 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.pagination import PageNumberPagination
@@ -32,12 +31,12 @@ from .serializers import (
 )
 
 
-class ListPostDelete(mixins.DestroyModelMixin,
-                     mixins.ListModelMixin,
-                     mixins.CreateModelMixin,
-                     viewsets.GenericViewSet):
+class ListPostDeleteViewSet(mixins.DestroyModelMixin,
+                            mixins.ListModelMixin,
+                            mixins.CreateModelMixin,
+                            viewsets.GenericViewSet):
     """
-    The class provides List, Post and Delete actions.
+    The class provides 'List', 'Create' and 'Destroy' actions.
     """
     pass
 
@@ -106,10 +105,10 @@ def GetJWTToken(request):
             user.save()
 
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        return Response('confirmation code или email не действительный',
+        return Response('confirmation code or email is not valid',
                         status=status.HTTP_200_OK)
 
-    return Response('Необходимо передать email и confirmation code.')
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -168,7 +167,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return title.reviews.all()
 
 
-class GenreViewSet(ListPostDelete):
+class GenreViewSet(ListPostDeleteViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = [ReadOnly | IsAdmin]
@@ -178,7 +177,7 @@ class GenreViewSet(ListPostDelete):
     pagination_class = PageNumberPagination
 
 
-class CategoryViewSet(ListPostDelete):
+class CategoryViewSet(ListPostDeleteViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [ReadOnly | IsAdmin]
