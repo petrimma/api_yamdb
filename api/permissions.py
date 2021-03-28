@@ -13,21 +13,21 @@ class ReadOnly(permissions.BasePermission):
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return (
-                request.user.is_authenticated and
-                request.user.role == UserRole.admin or
-                request.user.is_superuser
+            request.user.is_authenticated
+            and request.user.role == UserRole.admin
+            or request.user.is_superuser
         )
 
 
 class IsModerator(permissions.BasePermission):
     def has_permission(self, request, view):
-        return (request.user.is_authenticated and
-                request.user.role == UserRole.moderator)
+        return (request.user.is_authenticated
+                and request.user.role == UserRole.moderator)
 
     def has_object_permission(self, request, view, obj):
         return (
-                request.method in MODERATOR_ALLOWED_ACTIONS and
-                request.user.role == UserRole.moderator
+            request.method in MODERATOR_ALLOWED_ACTIONS
+            and request.user.role == UserRole.moderator
         )
 
 

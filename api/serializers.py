@@ -6,28 +6,28 @@ from .models import Comment, Review, User, Genre, Category, Title
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        read_only=True, slug_field='username'
     )
-    review = serializers.ReadOnlyField(source="review.id")
+    review = serializers.ReadOnlyField(source='review.id')
 
     class Meta:
-        fields = "__all__"
+        fields = '__all__'
         model = Comment
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        read_only=True, slug_field='username'
     )
-    title = serializers.ReadOnlyField(source="title.id")
+    title = serializers.ReadOnlyField(source='title.id')
 
     class Meta:
-        fields = "__all__"
+        fields = '__all__'
         model = Review
 
     def validate(self, data):
-        title=self.context.get('view').kwargs.get('title_id')
-        author=self.context['request'].user
+        title = self.context.get('view').kwargs.get('title_id')
+        author = self.context['request'].user
         if (self.context.get('request').method == 'POST'
             and Review.objects.filter(title=title,
                                       author_id=author.id).exists()):
@@ -55,7 +55,7 @@ class SendCodeSerializer(serializers.Serializer):
     def validate_email(self, value):
         normal_email = value.lower()
         if User.objects.filter(email=normal_email).exists():
-            raise serializers.ValidationError("Not unique email.")
+            raise serializers.ValidationError('Not unique email.')
         return normal_email
 
 
@@ -125,6 +125,7 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Title
 
+
 class TitleRatingSerializer(serializers.ModelSerializer):
     rating = serializers.FloatField()
 
@@ -141,4 +142,3 @@ class TitleRatingSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Title
-        
