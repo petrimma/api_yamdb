@@ -14,8 +14,12 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitlesFilter
 from .models import Review, Title, User, Genre, Category
-from .permissions import ReadOnly, IsModerator, IsAuthor, \
+from .permissions import (
+    ReadOnly,
+    IsModerator,
+    IsAuthor,
     IsAdmin
+)
 from .serializers import (
     UserSerializer,
     UserTokenSerializer,
@@ -23,7 +27,8 @@ from .serializers import (
     CommentSerializer,
     ReviewSerializer,
     GenreSerializer,
-    CategorySerializer, TitleSerializer,
+    CategorySerializer,
+    TitleSerializer,
 )
 
 
@@ -40,7 +45,12 @@ class ListPostDelete(mixins.DestroyModelMixin,
 @api_view(['POST'])
 @permission_classes((AllowAny,))
 def email_confirmation(request):
+    """
+    The class provides access to register users and send a confirmation code.
+    """
+
     def _random_username():
+        """Generates a random username """
         symbols_gen = string.ascii_uppercase
         random_code = get_random_string(length=5,
                                         allowed_chars=symbols_gen)
@@ -56,6 +66,7 @@ def email_confirmation(request):
         )
 
     serializer = SendCodeSerializer(data=request.data)
+
     if serializer.is_valid():
         user_email = request.data.get('email')
         confirmation_code = get_random_string(length=8,
@@ -69,6 +80,7 @@ def email_confirmation(request):
             )
 
         _send_email()
+
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -76,16 +88,25 @@ def email_confirmation(request):
 @api_view(['POST'])
 @permission_classes((AllowAny,))
 def GetJWTToken(request):
+    """
+    - Getting JWT if confirmation_code is valid.
+    - The confirmation code can be used only once,
+      after which it becomes invalid.
+    """
     serializer = UserTokenSerializer(data=request.data)
     if serializer.is_valid():
         email = request.data.get('email')
         confirmation_code = request.data.get('confirmation_code')
         user = get_object_or_404(User, email=email)
 
-        if user.confirmation_code == confirmation_code:
+        if (user.confirmation_code == confirmation_code and
+                not user.is_code_expired):
             token = AccessToken.for_user(user)
+            user.is_code_expired = True
+            user.save()
+
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        return Response('confirmation code: неверный код',
+        return Response('confirmation code или email не действительный',
                         status=status.HTTP_200_OK)
 
     return Response('Необходимо передать email и confirmation code.')
@@ -101,8 +122,9 @@ class UserViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
 
     @action(methods=('GET', 'PATCH'),
-            permission_classes=(IsAuthenticated, ),
+            permission_classes=(IsAuthenticated,),
             detail=False)
+    # api to /users/me/
     def me(self, request):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
@@ -169,7 +191,6 @@ class CategoryViewSet(ListPostDelete):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    pagination_class = PageNumberPagination
     permission_classes = [ReadOnly | IsAdmin]
-    filter_backends = [DjangoFilterBackend]
     filterset_class = TitlesFilter
+    pagination_class = PageNumberPagination
