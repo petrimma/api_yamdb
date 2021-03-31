@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
 
 from .models import Comment, Review, User, Genre, Category, Title
 
@@ -54,8 +53,6 @@ class SendCodeSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         normal_email = value.lower()
-        if User.objects.filter(email=normal_email).exists():
-            raise serializers.ValidationError('Not unique email.')
         return normal_email
 
 
@@ -63,61 +60,31 @@ class UserTokenSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True, write_only=True)
     confirmation_code = serializers.CharField(required=True, write_only=True)
 
-    def validate_email(self, value):
-        if not value:
-            raise ValidationError('Email address is required.')
-        return value.lower()
-
-    def validate_confirmation_code(self, value):
-        if not value:
-            raise ValidationError('confirmation code is required.')
-        return value
-
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'slug',)
+        exclude = ['id']
         lookup_field = 'slug'
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ('name', 'slug',)
+        exclude = ['id']
         lookup_field = 'slug'
         model = Genre
 
 
-class GenreField(serializers.SlugRelatedField):
-    def to_internal_value(self, data):
-        try:
-            return self.get_queryset().get(**{self.slug_field: data})
-        except (TypeError, ValueError):
-            self.fail('invalid')
-
-    def to_representation(self, value):
-        return GenreSerializer(value).data
-
-
-class CategoryField(serializers.SlugRelatedField):
-    def to_internal_value(self, data):
-        try:
-            return self.get_queryset().get(**{self.slug_field: data})
-        except (TypeError, ValueError):
-            self.fail('invalid')
-
-    def to_representation(self, value):
-        return CategorySerializer(value).data
-
-
 class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreField(
-        many=True,
+    genre = serializers.SlugRelatedField(
         slug_field='slug',
+        many=True,
+        required=False,
         queryset=Genre.objects.all()
     )
-    category = CategoryField(
+    category = serializers.SlugRelatedField(
         slug_field='slug',
+        required=False,
         queryset=Category.objects.all()
     )
 
@@ -129,15 +96,8 @@ class TitleSerializer(serializers.ModelSerializer):
 class TitleRatingSerializer(serializers.ModelSerializer):
     rating = serializers.FloatField()
 
-    genre = GenreField(
-        many=True,
-        slug_field='slug',
-        queryset=Genre.objects.all()
-    )
-    category = CategoryField(
-        slug_field='slug',
-        queryset=Category.objects.all()
-    )
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer( read_only=True)
 
     class Meta:
         fields = '__all__'

@@ -67,9 +67,8 @@ def email_confirmation(request):
         )
 
     serializer = SendCodeSerializer(data=request.data)
-
-    if serializer.is_valid():
-        user_email = request.data.get('email')
+    if serializer.is_valid(raise_exception=True):
+        user_email = serializer.validated_data['email']
         confirmation_code = get_random_string(length=8,
                                               allowed_chars=string.digits)
 
@@ -81,9 +80,7 @@ def email_confirmation(request):
             )
 
         _send_email()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -95,9 +92,9 @@ def GetJWTToken(request):
       after which it becomes invalid.
     """
     serializer = UserTokenSerializer(data=request.data)
-    if serializer.is_valid():
-        email = request.data.get('email')
-        confirmation_code = request.data.get('confirmation_code')
+    if serializer.is_valid(raise_exception=True):
+        email = serializer.validated_data['email']
+        confirmation_code = serializer.validated_data['confirmation_code']
         user = get_object_or_404(User, email=email)
 
         if (user.confirmation_code == confirmation_code
@@ -109,7 +106,6 @@ def GetJWTToken(request):
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
         return Response('confirmation code or email is not valid',
                         status=status.HTTP_200_OK)
-
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -125,19 +121,19 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=('GET', 'PATCH'),
             permission_classes=(IsAuthenticated,),
             detail=False)
-    # api to /users/me/
     def me(self, request):
+        """API to /users/me/"""
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
             return Response(serializer.data)
+
         if request.method == 'PATCH':
-            user = get_object_or_404(User, username=request.user.username)
+            user = request.user
             serializer = UserSerializer(user, request.data, partial=True)
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
