@@ -46,26 +46,30 @@ class Genre(models.Model):
     name = models.CharField('Название жанра', unique=True, max_length=20)
     slug = models.SlugField(max_length=100, unique=True)
 
-    def __str__(self):
-        return self.name
-
     class Meta:
+        verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
         ordering = ('-name',)
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
+
+    def __str__(self):
+        return self.name
 
 
 class Category(models.Model):
     name = models.CharField('Название категории', unique=True, max_length=20)
     slug = models.SlugField(max_length=100, unique=True)
 
-    def __str__(self):
-        return self.name
-
     class Meta:
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categiries'
         ordering = ('-name',)
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
+
+    def __str__(self):
+        return self.name
 
 
 class Title(models.Model):
@@ -85,6 +89,8 @@ class Title(models.Model):
             )
 
     class Meta:
+        verbose_name = 'Title'
+        verbose_name_plural = 'Titles'
         ordering = ('-name',)
 
 
