@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 
 
@@ -47,6 +50,8 @@ class Genre(models.Model):
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
         ordering = ('-name',)
+        verbose_name = 'Genre'
+        verbose_name_plural = 'Genres'
 
     def __str__(self):
         return self.name
@@ -60,6 +65,8 @@ class Category(models.Model):
         verbose_name = 'Category'
         verbose_name_plural = 'Categiries'
         ordering = ('-name',)
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
 
     def __str__(self):
         return self.name
@@ -69,19 +76,25 @@ class Title(models.Model):
     name = models.CharField('Название', max_length=20)
     year = models.IntegerField('Год выпуска', blank=True, null=True)
     description = models.TextField('Описание', max_length=400, blank=True)
-    genre = models.ManyToManyField(Genre, verbose_name='genre')
+    genre = models.ManyToManyField(Genre, verbose_name='genres')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL,
                                  blank=True, null=True,
-                                 verbose_name='category')
+                                 verbose_name='categories')
+
+    def validate_year(self, value):
+        if value < 1900 or value > datetime.now().year:
+            raise ValidationError(
+                '%(value)s is not a correcrt year!',
+                params={'value': value},
+            )
 
     class Meta:
         verbose_name = 'Title'
         verbose_name_plural = 'Titles'
-        ordering = ('-name', )
+        ordering = ('-name',)
 
 
 class Review(models.Model):
-
     class Score(models.IntegerChoices):
         ONE = 1
         TWO = 2
