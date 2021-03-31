@@ -5,32 +5,20 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-from rest_framework import filters, status, viewsets, mixins
-from rest_framework.decorators import api_view, permission_classes, action
+from rest_framework import filters, mixins, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitlesFilter
-from .models import Review, Title, User, Genre, Category
-from .permissions import (
-    ReadOnly,
-    IsModerator,
-    IsAuthor,
-    IsAdmin
-)
-from .serializers import (
-    UserSerializer,
-    UserTokenSerializer,
-    SendCodeSerializer,
-    CommentSerializer,
-    ReviewSerializer,
-    GenreSerializer,
-    CategorySerializer,
-    TitleSerializer,
-    TitleRatingSerializer,
-)
+from .models import Category, Genre, Review, Title, User
+from .permissions import IsAdmin, IsAuthor, IsModerator, ReadOnly
+from .serializers import (CategorySerializer, CommentSerializer,
+                          GenreSerializer, ReviewSerializer,
+                          SendCodeSerializer, TitleRatingSerializer,
+                          TitleSerializer, UserSerializer, UserTokenSerializer)
 
 
 class ListPostDeleteViewSet(mixins.DestroyModelMixin,
