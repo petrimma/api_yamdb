@@ -94,7 +94,6 @@ def GetJWTToken(request):
             return Response({'token': str(token)}, status=status.HTTP_200_OK)
         return Response('confirmation code or email is not valid',
                         status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -114,6 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = UserSerializer(request.user)
             return Response(serializer.data)
+
         if request.method == 'PATCH':
             user = request.user
             serializer = UserSerializer(user, request.data, partial=True)
