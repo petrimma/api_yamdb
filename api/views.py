@@ -14,7 +14,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from .filters import TitlesFilter
 from .models import Category, Genre, Review, Title, User
-from .permissions import IsAdmin, IsAuthor, IsModerator, ReadOnly
+from .permissions import IsAdmin, IsAuthorOrModerator, ReadOnly
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, ReviewSerializer,
                           SendCodeSerializer, TitleRatingSerializer,
@@ -55,6 +55,7 @@ def email_confirmation(request):
         )
 
     serializer = SendCodeSerializer(data=request.data)
+
     if serializer.is_valid(raise_exception=True):
         user_email = serializer.validated_data['email']
         confirmation_code = get_random_string(length=8,
@@ -125,6 +126,7 @@ class UserViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
+    permission_classes = [IsAuthorOrModerator | ReadOnly]
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
@@ -134,19 +136,11 @@ class CommentViewSet(viewsets.ModelViewSet):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
         return review.comments.all()
 
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [ReadOnly]
-        elif self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthor | IsModerator & IsAdmin]
-        return [permission() for permission in permission_classes]
-
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
+    permission_classes = [ReadOnly | IsAuthorOrModerator]
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -155,15 +149,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         return title.reviews.all()
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [ReadOnly]
-        elif self.action == 'create':
-            permission_classes = [IsAuthenticated]
-        else:
-            permission_classes = [IsAuthor | IsModerator & IsAdmin]
-        return [permission() for permission in permission_classes]
 
 
 class GenreViewSet(ListPostDeleteViewSet):
