@@ -47,8 +47,6 @@ class Genre(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
 
     class Meta:
-        verbose_name = 'Genre'
-        verbose_name_plural = 'Genres'
         ordering = ('-name',)
         verbose_name = 'Genre'
         verbose_name_plural = 'Genres'
@@ -62,8 +60,6 @@ class Category(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
 
     class Meta:
-        verbose_name = 'Category'
-        verbose_name_plural = 'Categiries'
         ordering = ('-name',)
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
@@ -84,7 +80,7 @@ class Title(models.Model):
     def validate_year(self, value):
         if value < 1900 or value > datetime.now().year:
             raise ValidationError(
-                '%(value)s is not a correcrt year!',
+                f'{value} is is not a correcrt year!',
                 params={'value': value},
             )
 
