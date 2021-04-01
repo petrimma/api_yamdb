@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -90,29 +91,29 @@ class Title(models.Model):
 
 
 class Review(models.Model):
-    class Score(models.IntegerChoices):
-        ONE = 1
-        TWO = 2
-        THREE = 3
-        FOUR = 4
-        FIVE = 5
-        SIX = 6
-        SEVEN = 7
-        EIGHT = 8
-        NINE = 9
-        TEN = 10
-
     title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name='reviews',
+        Title, on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Произведение'
     )
-    text = models.TextField()
+    text = models.TextField('Отзыв')
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='reviews'
+        User, on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Автор отзыва'
     )
-    score = models.IntegerField(choices=Score.choices)
+    score = models.IntegerField(
+        'Оценка',
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
     pub_date = models.DateTimeField(
-        'Дата публикации', auto_now_add=True
+        'Дата публикации', auto_now_add=True, db_index=True
     )
+
+    class Meta:
+        verbose_name = 'Review'
+        verbose_name_plural = 'Reviews'
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text
@@ -120,15 +121,24 @@ class Review(models.Model):
 
 class Comment(models.Model):
     review = models.ForeignKey(
-        Review, on_delete=models.CASCADE, related_name='comments',
+        Review, on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Отзыв'
     )
-    text = models.TextField()
+    text = models.TextField('Комментарий')
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comments'
+        User, on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор комментария'
     )
     pub_date = models.DateTimeField(
-        'Дата публикации', auto_now_add=True
+        'Дата публикации', auto_now_add=True, db_index=True
     )
+
+    class Meta:
+        verbose_name = 'Comment'
+        verbose_name_plural = 'Comments'
+        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.text
