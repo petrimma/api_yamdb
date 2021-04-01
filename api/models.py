@@ -5,13 +5,12 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 
-class UserRole(models.TextChoices):
-    USER = 'user', 'Пользователь'
-    MODERATOR = 'moderator', 'Модератор'
-    ADMIN = 'admin', 'Администратор'
-
-
 class User(AbstractUser):
+    class UserRole(models.TextChoices):
+        USER = 'user', 'Пользователь'
+        MODERATOR = 'moderator', 'Модератор'
+        ADMIN = 'admin', 'Администратор'
+
     bio = models.CharField(
         max_length=200,
         null=True,
