@@ -1,20 +1,7 @@
-from datetime import datetime
-
 from rest_framework import serializers
-from rest_framework.validators import ValidationError
 
 from .models import Category, Comment, Genre, Review, Title, User
-
-
-class TitleValidator:
-    """Validators for title serializers"""
-
-    def validate_year(self, value):
-        if value < 1900 or value > datetime.now().year:
-            raise ValidationError(
-                f'{value} is is not a correct year!'
-            )
-        return value
+from .validators import year_validator
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -89,7 +76,8 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer, TitleValidator):
+class TitleSerializer(serializers.ModelSerializer):
+    """The serializer uses for 'not safe actions"""
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         many=True,
@@ -106,8 +94,12 @@ class TitleSerializer(serializers.ModelSerializer, TitleValidator):
         fields = '__all__'
         model = Title
 
+    def validate_year(self, value):
+        return year_validator(value)
 
-class TitleRatingSerializer(serializers.ModelSerializer, TitleValidator):
+
+class TitleRatingSerializer(serializers.ModelSerializer):
+    """The serializer uses only for 'list' and 'retrieve' actions"""
     rating = serializers.FloatField()
 
     genre = GenreSerializer(many=True, read_only=True)
