@@ -56,7 +56,6 @@ def email_confirmation(request):
         )
 
     serializer = SendCodeSerializer(data=request.data)
-
     serializer.is_valid(raise_exception=True)
     user_email = serializer.validated_data['email']
     confirmation_code = get_random_string(length=8,
