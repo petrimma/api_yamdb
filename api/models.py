@@ -1,7 +1,4 @@
-from datetime import datetime
-
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -72,17 +69,10 @@ class Title(models.Model):
     name = models.CharField('Название', max_length=20)
     year = models.IntegerField('Год выпуска', blank=True, null=True)
     description = models.TextField('Описание', max_length=400, blank=True)
-    genre = models.ManyToManyField(Genre, verbose_name='genres')
+    genre = models.ManyToManyField(Genre, verbose_name='titles')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL,
                                  blank=True, null=True,
-                                 verbose_name='categories')
-
-    def validate_year(self, value):
-        if value < 1900 or value > datetime.now().year:
-            raise ValidationError(
-                f'{value} is is not a correct year!',
-                params={'value': value},
-            )
+                                 verbose_name='titles')
 
     class Meta:
         verbose_name = 'Title'

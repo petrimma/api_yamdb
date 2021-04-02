@@ -1,6 +1,20 @@
+from datetime import datetime
+
 from rest_framework import serializers
+from rest_framework.validators import ValidationError
 
 from .models import Category, Comment, Genre, Review, Title, User
+
+
+class TitleValidator:
+    """Validators for title serializers"""
+
+    def validate_year(self, value):
+        if value < 1900 or value > datetime.now().year:
+            raise ValidationError(
+                f'{value} is is not a correct year!'
+            )
+        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -28,8 +42,8 @@ class ReviewSerializer(serializers.ModelSerializer):
         title = self.context.get('view').kwargs.get('title_id')
         author = self.context['request'].user
         if (self.context.get('request').method == 'POST'
-            and Review.objects.filter(title=title,
-                                      author_id=author.id).exists()):
+                and Review.objects.filter(title=title,
+                                          author_id=author.id).exists()):
             raise serializers.ValidationError(
                 'Вы уже написали отзыв.')
         return data
@@ -75,7 +89,7 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleSerializer(serializers.ModelSerializer, TitleValidator):
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         many=True,
@@ -93,7 +107,7 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
 
 
-class TitleRatingSerializer(serializers.ModelSerializer):
+class TitleRatingSerializer(serializers.ModelSerializer, TitleValidator):
     rating = serializers.FloatField()
 
     genre = GenreSerializer(many=True, read_only=True)
