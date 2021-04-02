@@ -46,6 +46,7 @@ def email_confirmation(request):
         return f'USER_{random_code}'
 
     def _send_email():
+        """send email with a confirmation code"""
         send_mail(
             subject='Yamdb Registration',
             message=f'Your confirmation code: {confirmation_code}',
@@ -56,20 +57,21 @@ def email_confirmation(request):
 
     serializer = SendCodeSerializer(data=request.data)
 
-    if serializer.is_valid(raise_exception=True):
-        user_email = serializer.validated_data['email']
-        confirmation_code = get_random_string(length=8,
-                                              allowed_chars=string.digits)
+    serializer.is_valid(raise_exception=True)
+    user_email = serializer.validated_data['email']
+    confirmation_code = get_random_string(length=8,
+                                          allowed_chars=string.digits)
 
-        if not User.objects.filter(email=user_email).exists():
-            User.objects.create_user(
-                email=user_email,
-                username=_random_username(),
-                confirmation_code=confirmation_code
-            )
+    if not User.objects.filter(email=user_email).exists():
+        User.objects.create_user(
+            email=user_email,
+            username=_random_username(),
+            confirmation_code=confirmation_code
+        )
 
         _send_email()
-    return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response('The user already exists.')
 
 
 @api_view(['POST'])
@@ -81,20 +83,22 @@ def GetJWTToken(request):
       after which it becomes invalid.
     """
     serializer = UserTokenSerializer(data=request.data)
-    if serializer.is_valid(raise_exception=True):
-        email = serializer.validated_data['email']
-        confirmation_code = serializer.validated_data['confirmation_code']
-        user = get_object_or_404(User, email=email)
+    serializer.is_valid(raise_exception=True)
 
-        if (user.confirmation_code == confirmation_code
-                and not user.is_code_expired):
-            token = AccessToken.for_user(user)
-            user.is_code_expired = True
-            user.save()
+    email = serializer.validated_data['email']
+    confirmation_code = serializer.validated_data['confirmation_code']
+    user = get_object_or_404(User, email=email)
 
-            return Response({'token': str(token)}, status=status.HTTP_200_OK)
-        return Response('confirmation code or email is not valid',
-                        status=status.HTTP_200_OK)
+    if (user.confirmation_code == confirmation_code
+            and not user.is_code_expired):
+        token = AccessToken.for_user(user)
+        user.is_code_expired = True
+        user.save()
+
+        return Response({'token': str(token)}, status=status.HTTP_200_OK)
+
+    return Response('confirmation code or email is not valid',
+                    status=status.HTTP_200_OK)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -118,8 +122,8 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'PATCH':
             user = request.user
             serializer = UserSerializer(user, request.data, partial=True)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -140,7 +144,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [ReadOnly | IsAuthorOrModerator]
+    permission_classes = [IsAuthorOrModerator | ReadOnly]
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
