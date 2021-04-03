@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from .models import Category, Comment, Genre, Review, Title, User
-from .validators import year_validator
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -93,9 +92,6 @@ class TitleSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Title
-
-    def validate_year(self, value):
-        return year_validator(value)
 
 
 class TitleRatingSerializer(serializers.ModelSerializer):
