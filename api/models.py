@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
+from .validators import year_validator
 
 class User(AbstractUser):
     class UserRole(models.TextChoices):
@@ -67,7 +67,8 @@ class Category(models.Model):
 
 class Title(models.Model):
     name = models.CharField('Название', max_length=20)
-    year = models.IntegerField('Год выпуска', blank=True, null=True)
+    year = models.IntegerField('Год выпуска', blank=True, null=True,
+                               validators=[year_validator])
     description = models.TextField('Описание', max_length=400, blank=True)
     genre = models.ManyToManyField(Genre, verbose_name='titles')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL,
